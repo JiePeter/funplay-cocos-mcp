@@ -3,7 +3,7 @@
 module.paths.push(Editor.App.path + '/node_modules');
 
 const cc = require('cc');
-const { attachPrefabMetadata, normalizePrefabNodeLayers } = require('./lib/prefab-metadata');
+const { attachPrefabMetadata, inheritNodeLayer, normalizePrefabNodeLayers } = require('./lib/prefab-metadata');
 
 const {
   Node,
@@ -726,6 +726,9 @@ exports.methods = {
 
     const node = new Node(name);
     node.parent = parent;
+    // A new Node defaults to Layers.Enum.DEFAULT, which the UI camera (UI_2D) never renders. Inherit the
+    // parent's layer (or accept an explicit one) so nodes created under a Canvas are actually visible.
+    const layerInfo = inheritNodeLayer(node, parent, { override: options.layer });
 
     if (options.position) {
       node.setPosition(options.position.x || 0, options.position.y || 0, options.position.z || 0);
@@ -752,6 +755,8 @@ exports.methods = {
       name: node.name,
       path: getNodePath(node),
       uuid: node.uuid,
+      layer: layerInfo.layer,
+      layerSource: layerInfo.source,
     };
   },
 

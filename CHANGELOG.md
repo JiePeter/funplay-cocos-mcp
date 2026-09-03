@@ -6,6 +6,22 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.5.1-blackcorps.1] - 2026-09-02
+
+Fork build maintained at https://github.com/JiePeter/funplay-cocos-mcp for the black-corps project
+(upstream: FunplayAI/funplay-cocos-mcp 0.5.1). Generic fixes are offered back upstream as PRs.
+
+### Added
+
+- `stop_project_preview` tool: stops the editor Game View preview (`scene.editor-preview-set-play false`)
+  so scene write tools can run without being routed to the preview facade.
+
+### Fixed
+
+- `create_node` now inherits the parent node's layer (UI_2D when the parent has none) instead of leaving
+  the new node on `Layers.Enum.DEFAULT`, which the UI camera never renders. An explicit `layer` argument
+  overrides it; the result reports `layer` and `layerSource`.
+
 ## [0.5.1] - 2026-08-18
 
 ### Fixed

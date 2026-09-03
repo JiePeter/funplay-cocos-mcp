@@ -7,8 +7,36 @@ const {
   assertSerializedPrefabMetadata,
   attachPrefabMetadata,
   createPrefabFileId,
+  inheritNodeLayer,
   normalizePrefabNodeLayers,
 } = require('../lib/prefab-metadata');
+
+const DEFAULT_LAYER = 1073741824;
+
+test('inheritNodeLayer copies the parent layer onto a new node', () => {
+  const node = { layer: DEFAULT_LAYER };
+  const result = inheritNodeLayer(node, { layer: UI_2D_LAYER });
+  assert.deepEqual(result, { layer: UI_2D_LAYER, source: 'parent' });
+  assert.equal(node.layer, UI_2D_LAYER);
+});
+
+test('inheritNodeLayer falls back to UI_2D when the parent has no usable layer', () => {
+  const orphan = { layer: DEFAULT_LAYER };
+  assert.deepEqual(inheritNodeLayer(orphan, null), { layer: UI_2D_LAYER, source: 'fallback' });
+  const underZero = { layer: DEFAULT_LAYER };
+  assert.deepEqual(inheritNodeLayer(underZero, { layer: 0 }), { layer: UI_2D_LAYER, source: 'fallback' });
+  const custom = { layer: DEFAULT_LAYER };
+  assert.deepEqual(inheritNodeLayer(custom, {}, { fallback: 4 }), { layer: 4, source: 'fallback' });
+});
+
+test('inheritNodeLayer honours an explicit override and rejects invalid ones', () => {
+  const node = { layer: DEFAULT_LAYER };
+  assert.deepEqual(inheritNodeLayer(node, { layer: UI_2D_LAYER }, { override: 8 }), { layer: 8, source: 'override' });
+  assert.equal(node.layer, 8);
+  assert.throws(() => inheritNodeLayer({}, null, { override: -1 }), /non-negative integer/);
+  assert.throws(() => inheritNodeLayer({}, null, { override: 1.5 }), /non-negative integer/);
+  assert.throws(() => inheritNodeLayer(null, null), /Node is required/);
+});
 
 class PrefabInfo {}
 class CompPrefabInfo {}

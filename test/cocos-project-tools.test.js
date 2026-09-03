@@ -11,6 +11,7 @@ const {
   runProjectPreview,
   setEditorPreference,
   setPreviewMode,
+  stopProjectPreview,
   tryEditorRequests,
   tryEditorRequestsStatus,
 } = require('../lib/tools/cocos-project');
@@ -264,6 +265,54 @@ test('runProjectPreview starts browser preview and returns local and network URL
     assert.equal(result.reportedUrl, 'http://192.168.16.119:7456/');
     assert.equal(result.urlAvailable, true);
     assert.equal(result.urlWarning, '');
+  } finally {
+    delete global.Editor;
+  }
+});
+
+test('stopProjectPreview stops the editor preview and reports the current mode', async () => {
+  const requests = [];
+  global.Editor = {
+    Message: {
+      request: async (...args) => {
+        requests.push(args);
+        return true;
+      },
+      send: () => {},
+    },
+    Profile: {
+      getConfig: async () => 'gameView',
+      setConfig: async () => {},
+    },
+  };
+
+  try {
+    const result = await stopProjectPreview();
+
+    assert.deepEqual(requests, [['scene', 'editor-preview-set-play', false]]);
+    assert.equal(result.stopped, true);
+    assert.equal(result.mode, 'gameView');
+    assert.equal(result.method, 'scene.editor-preview-set-play');
+    assert.equal(result.result, true);
+  } finally {
+    delete global.Editor;
+  }
+});
+
+test('stopProjectPreview fails loudly when Creator rejects the stop request', async () => {
+  global.Editor = {
+    Message: {
+      request: async () => false,
+      send: () => {},
+    },
+    Profile: {
+      getConfig: async () => 'gameView',
+      setConfig: async () => {},
+    },
+  };
+
+  try {
+    await assert.rejects(() => stopProjectPreview(), /rejected the editor preview stop request/);
   } finally {
     delete global.Editor;
   }
